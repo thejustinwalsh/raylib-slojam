@@ -58,10 +58,24 @@ if (NOT raygui_FOUND)
     FetchContent_MakeAvailable(raygui)
 endif()
 
+# reasings
+find_package(reasings QUIET)
+if (NOT reasings_FOUND)
+    include(FetchContent)
+    FetchContent_Declare(
+        reasings
+        GIT_REPOSITORY https://github.com/raylib-extras/reasings.git
+        GIT_TAG main
+    )
+    FetchContent_MakeAvailable(reasings)
+endif()
+
 # This is the main part:
 file(GLOB SOURCES CONFIGURE_DEPENDS src/*.cpp src/*.h src/*.hpp)
 file(GLOB_RECURSE RESOURCES CONFIGURE_DEPENDS resources/*)
-add_executable(${PROJECT_NAME} ${SOURCES})
+add_executable(${PROJECT_NAME} ${SOURCES} ${raygui_SOURCE_DIR/})
+target_include_directories(${PROJECT_NAME} PUBLIC ${raygui_SOURCE_DIR}/src ${reasings_SOURCE_DIR}/src)
+target_compile_definitions(${PROJECT_NAME} PUBLIC -DRAYGUI_IMPLEMENTATION)
 target_link_libraries(${PROJECT_NAME} PUBLIC raylib raylib_cpp)
 configure_files(${CMAKE_CURRENT_SOURCE_DIR}/resources ${CMAKE_CURRENT_BINARY_DIR}/resources)
 

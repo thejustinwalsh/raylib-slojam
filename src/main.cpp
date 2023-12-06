@@ -12,8 +12,9 @@
 *   Copyright (c) 2015 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
-
 #include "raylib-cpp.hpp"
+#include "reasings.h"
+#include "raygui.h"
 #include <filesystem>
 
 #if defined(PLATFORM_WEB)
@@ -78,6 +79,8 @@ void UpdateDrawFrame(void)
     BeginDrawing();
 
         ClearBackground(RAYWHITE);
+
+        GuiLabel((Rectangle){ 0, 0, 100, 20 }, "Hello World!");
 
         DrawTexture(logo, screenWidth / 2 - logo.width / 2, screenHeight / 2 - logo.height / 2, WHITE);
 
