@@ -80,7 +80,7 @@ void UpdateDrawFrame(void)
 
         ClearBackground(RAYWHITE);
 
-        GuiLabel((Rectangle){ 0, 0, 100, 20 }, "Hello World!");
+        GuiLabel({ 0, 0, 100, 20 }, "Hello World!");
 
         DrawTexture(logo, screenWidth / 2 - logo.width / 2, screenHeight / 2 - logo.height / 2, WHITE);
 
