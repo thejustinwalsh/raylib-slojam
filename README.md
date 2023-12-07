@@ -1,6 +1,5 @@
-# raylib-gamejam-template
-
-Use this template to build a [raylib-cpp](https://github.com/RobLoach/raylib-cpp) project using [CMake](https://cmake.org).
+# raylib-slojam
+> https://itch.io/jam/raylib-slo-jam
 
 ## Dependencies
 
