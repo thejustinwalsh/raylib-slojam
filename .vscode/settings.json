@@ -79,6 +79,14 @@
     "condition_variable": "cpp",
     "iostream": "cpp",
     "list": "cpp",
-    "thread": "cpp"
+    "thread": "cpp",
+    "chrono": "cpp",
+    "functional": "cpp",
+    "memory_resource": "cpp",
+    "iterator": "cpp",
+    "memory": "cpp",
+    "type_traits": "cpp",
+    "utility": "cpp",
+    "*.m": "cpp"
   }
 }

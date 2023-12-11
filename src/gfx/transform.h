@@ -5,19 +5,19 @@
 namespace gfx {
 
     struct Position {
-        raylib::Vector2 value;
+        raylib::Vector2 value = {0, 0};;
     };
 
     struct Rotation {
-        float value;
+        float value = 0;
     };
 
     struct Scale {
-        raylib::Vector2 value;
+        raylib::Vector2 value = {1, 1};
     };
 
     struct Origin {
-        raylib::Vector2 value;
+        raylib::Vector2 value = {0, 0};
     };
 
     namespace Origins {

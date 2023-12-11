@@ -9,7 +9,7 @@ namespace gfx {
 extern flecs::entity Sprite;
 
 struct Tint {
-    raylib::Color value;
+    raylib::Color value = {0, 0, 0, 255};
 };
 
 struct SpriteRendering {};
