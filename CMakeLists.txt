@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.14)
 project(raylib_gamejam_template)
+include(FetchContent)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/packages ")
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Resoruce copy macro
@@ -22,72 +24,60 @@ macro(configure_files srcDir destDir)
     endforeach(templateFile)
 endmacro(configure_files)
 
-# raylib
-find_package(raylib QUIET)
-if (NOT raylib_FOUND)
-    include(FetchContent)
-    FetchContent_Declare(
-        raylib
-        GIT_REPOSITORY https://github.com/raysan5/raylib.git
-        GIT_TAG 5.0
-    )
-    FetchContent_MakeAvailable(raylib)
-endif()
+include("packages/flecs.cmake")
 
-# raylib-cpp
-find_package(raylib_cpp QUIET)
-if (NOT raylib_cpp_FOUND)
-    include(FetchContent)
-    FetchContent_Declare(
-        raylib_cpp
-        GIT_REPOSITORY https://github.com/RobLoach/raylib-cpp.git
-        GIT_TAG v5.0.0
-    )
-    FetchContent_MakeAvailable(raylib_cpp)
-endif()
+include("packages/raylib.cmake")
 
-# raygui
-find_package(raygui QUIET)
-if (NOT raygui_FOUND)
-    include(FetchContent)
-    FetchContent_Declare(
-        raygui
-        GIT_REPOSITORY https://github.com/raysan5/raygui.git
-        GIT_TAG 4.0
-    )
-    FetchContent_MakeAvailable(raygui)
-endif()
-
-# reasings
-find_package(reasings QUIET)
-if (NOT reasings_FOUND)
-    include(FetchContent)
-    FetchContent_Declare(
-        reasings
-        GIT_REPOSITORY https://github.com/raylib-extras/reasings.git
-        GIT_TAG main
-    )
-    FetchContent_MakeAvailable(reasings)
-endif()
-
-# This is the main part:
-file(GLOB SOURCES CONFIGURE_DEPENDS src/*.cpp src/*.h src/*.hpp)
+# Gather all src files and dependencies
+file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS src/*.cpp src/*.h src/*.hpp)
 file(GLOB_RECURSE RESOURCES CONFIGURE_DEPENDS resources/*)
+
+# Setup the executable target
 add_executable(${PROJECT_NAME} ${SOURCES} ${raygui_SOURCE_DIR/})
-target_include_directories(${PROJECT_NAME} PUBLIC ${raygui_SOURCE_DIR}/src ${reasings_SOURCE_DIR}/src)
-target_compile_definitions(${PROJECT_NAME} PUBLIC -DRAYGUI_IMPLEMENTATION)
-target_link_libraries(${PROJECT_NAME} PUBLIC raylib raylib_cpp)
+add_compile_options(-Wno-error)
+target_compile_definitions(${PROJECT_NAME} PUBLIC -DRAYGUI_IMPLEMENTATION -DFLECS_NO_APP -DFLECS_NO_PLECS)
+
+# Include directories
+target_include_directories(${PROJECT_NAME} PUBLIC 
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${raygui_SOURCE_DIR}/src 
+    ${reasings_SOURCE_DIR}/src
+    ${flecs_SOURCE_DIR}/include
+)
+
+# Link libraries
+target_link_libraries(${PROJECT_NAME} PUBLIC 
+    raylib 
+    raylib_cpp 
+    flecs::flecs_static
+)
+
+# Copy resources to build directory
 configure_files(${CMAKE_CURRENT_SOURCE_DIR}/resources ${CMAKE_CURRENT_BINARY_DIR}/resources)
 
-# Web Configurations
+# Web Configuration
 if (${PLATFORM} STREQUAL "Web")
     # Tell Emscripten to build an example.html file.
     set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX ".html")
     set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "--preload-file ./resources")
+    #set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "--shell-file ${CMAKE_CURRENT_SOURCE_DIR}/public/template.html")
+    
     set_target_properties(${PROJECT_NAME} PROPERTIES LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/resources)
 
+    # Enable debug symbols in non release builds
+    if (NOT CMAKE_BUILD_TYPE STREQUAL "Release")
+        target_compile_options(${PROJECT_NAME} PRIVATE -g)
+        target_link_options(${PROJECT_NAME} PRIVATE -g -gsource-map --emit-symbol-map --emrun)
+    endif()
+
     # Required linker flags for using Raylib with Emscripten
-    target_link_options(${PROJECT_NAME} PRIVATE -sEXPORTED_FUNCTIONS=['_main','_malloc'] -sEXPORTED_RUNTIME_METHODS=ccall -sUSE_GLFW=3)
+    target_link_options(${PROJECT_NAME} PRIVATE 
+        -sEXPORTED_FUNCTIONS=['_main','_malloc'] 
+        -sEXPORTED_RUNTIME_METHODS=['ccall','cwrap']
+        -sUSE_GLFW=3 
+        -sALLOW_MEMORY_GROWTH=1
+        -sSTACK_SIZE=1mb
+    )
 endif()
 
 # That's it! You should have an example executable that you can run. Have fun!
