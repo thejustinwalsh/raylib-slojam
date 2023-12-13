@@ -54,15 +54,14 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
 
 # Copy resources to build directory
 configure_files(${CMAKE_CURRENT_SOURCE_DIR}/resources ${CMAKE_CURRENT_BINARY_DIR}/resources)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/etc/template.html ${CMAKE_CURRENT_BINARY_DIR}/etc/template.html)
 
 # Web Configuration
 if (${PLATFORM} STREQUAL "Web")
     # Tell Emscripten to build an example.html file.
     set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX ".html")
-    set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "--preload-file ./resources")
-    #set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "--shell-file ${CMAKE_CURRENT_SOURCE_DIR}/public/template.html")
-    
-    set_target_properties(${PROJECT_NAME} PROPERTIES LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/resources)
+    set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "--preload-file ./resources --shell-file ${CMAKE_CURRENT_SOURCE_DIR}/etc/template.html")
+    set_target_properties(${PROJECT_NAME} PROPERTIES LINK_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/resources;${CMAKE_CURRENT_BINARY_DIR}/etc/template.html")
 
     # Enable debug symbols in non release builds
     if (NOT CMAKE_BUILD_TYPE STREQUAL "Release")
