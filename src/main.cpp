@@ -72,6 +72,9 @@ int main()
 
     flecs::log::set_level(1);
 
+    char *no_color = getenv("NO_COLOR");
+    flecs::log::enable_colors(!(no_color != NULL && no_color[0] != '\0'));
+
     ecs.import<core::ResourceModule>();
     ecs.import<core::WindowModule>();
     ecs.import<gfx::SpriteModule>();
@@ -82,6 +85,9 @@ int main()
         .set<core::WindowTitle>({"Raylib Slo-Jam 2023"})
         .set<core::WindowFPS>({60})
         .add<core::Window>();
+
+
+    // TODO: Add the game/title, game/loop, and game/over modules and enable/disable them as needed.
 
     struct Logo {};
     ecs.entity<Logo>()
