@@ -1,10 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
+
 project(raylib_gamejam_template)
 include(FetchContent)
-
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/packages ")
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Resoruce copy macro
 macro(configure_files srcDir destDir)
@@ -24,9 +21,9 @@ macro(configure_files srcDir destDir)
     endforeach(templateFile)
 endmacro(configure_files)
 
-include("packages/flecs.cmake")
-
-include("packages/raylib.cmake")
+# Include raylib, flecs, and additional modules and packages for each
+include(${CMAKE_CURRENT_LIST_DIR}/packages/flecs.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/packages/raylib.cmake)
 
 # Gather all src files and dependencies
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS src/*.cpp src/*.h src/*.hpp)
@@ -34,7 +31,7 @@ file(GLOB_RECURSE RESOURCES CONFIGURE_DEPENDS resources/*)
 
 # Setup the executable target
 add_executable(${PROJECT_NAME} ${SOURCES} ${raygui_SOURCE_DIR/})
-add_compile_options(-Wno-error)
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 target_compile_definitions(${PROJECT_NAME} PUBLIC -DRAYGUI_IMPLEMENTATION -DFLECS_NO_APP -DFLECS_NO_PLECS)
 
 # Include directories
