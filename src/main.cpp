@@ -5,6 +5,9 @@
 #include "core/window.h"
 #include "gfx/sprite.h"
 #include "gfx/transform.h"
+#include "game/scene.h"
+#include "scene/types.h"
+#include "scene/title.h"
 
 #if defined(PLATFORM_WEB)
     #include <emscripten/emscripten.h>
@@ -12,30 +15,6 @@
 
 constexpr int SCREEN_WIDTH = 960;
 constexpr int SCREEN_HEIGHT = 450;
-
-//----------------------------------------------------------------------------------
-// Module Functions Definition
-//----------------------------------------------------------------------------------
-void UpdateDrawFrame(void)
-{
-    // Update
-    //----------------------------------------------------------------------------------
-    // TODO: Update your variables here
-    //----------------------------------------------------------------------------------
-
-    // Draw
-    //----------------------------------------------------------------------------------
-    BeginDrawing();
-
-        ClearBackground(RAYWHITE);
-
-        //GuiLabel({ 0, 0, 100, 20 }, "Hello World!");
-
-        //DrawTexture(logo, screenWidth / 2 - logo.width / 2, screenHeight / 2 - logo.height / 2, WHITE);
-
-    EndDrawing();
-    //----------------------------------------------------------------------------------
-}
 
 int main()
 {
@@ -78,6 +57,7 @@ int main()
     ecs.import<core::ResourceModule>();
     ecs.import<core::WindowModule>();
     ecs.import<gfx::SpriteModule>();
+    ecs.import<scene::TitleSceneModule>();
 
     struct MainWindow{};
     ecs.singleton<MainWindow>()
@@ -86,14 +66,8 @@ int main()
         .set<core::WindowFPS>({60})
         .add<core::Window>();
 
-
-    // TODO: Add the game/title, game/loop, and game/over modules and enable/disable them as needed.
-
-    struct Logo {};
-    ecs.entity<Logo>()
-        .is_a(gfx::Sprite)
-        .set<core::ResourcePath>({"raylib_logo.png"})
-        .set<gfx::Position>({{SCREEN_WIDTH/2, SCREEN_HEIGHT/2}});
+    // Init game title scene
+    ecs.add<game::ActiveScene, scene::TitleScene>();
     
     #if defined(PLATFORM_WEB)
         emscripten_set_main_loop_arg([](void* ctx) { ecs_progress((ecs_world_t*)ctx, 0); }, ecs, 0, true);
