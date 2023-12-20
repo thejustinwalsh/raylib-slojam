@@ -7,12 +7,14 @@
 namespace core {
 
 WindowModule::WindowModule(flecs::world& ecs) {
+    
     std::vector Phases = {
         ecs.entity<RenderPhases::Begin>(),
         ecs.entity<RenderPhases::Background>(),
         ecs.entity<RenderPhases::Draw>(),
         ecs.entity<RenderPhases::UI>(),
-        ecs.entity<RenderPhases::End>()
+        ecs.entity<RenderPhases::End>(),
+        ecs.entity<RenderPhases::Post>()
     };
 
     flecs::entity_t PriorPhase = flecs::OnStore;
@@ -30,7 +32,10 @@ WindowModule::WindowModule(flecs::world& ecs) {
     ecs.observer<Window>("RemoveWindow")
         .event(flecs::OnRemove)
         .each([](Window& window) {
-            window.handle.reset();
+            if (window.handle) {
+                window.handle->Close();
+                window.handle.reset();
+            }
         });
 
     ecs.observer<Window, const WindowTitle>("UpdateWindowTitle")
@@ -47,9 +52,10 @@ WindowModule::WindowModule(flecs::world& ecs) {
 
     ecs.observer<Window, WindowFPS>("UpdateWindowTargetFPS")
         .event(flecs::OnSet)
-        .each([](Window& window, const WindowFPS& fps) {
+        .each([&](Window& window, const WindowFPS& fps) {
 #ifndef PLATFORM_WEB
             window.handle->SetTargetFPS(fps.Target);
+            SetWindowState(FLAG_VSYNC_HINT);
 #endif
         });
     
@@ -58,15 +64,20 @@ WindowModule::WindowModule(flecs::world& ecs) {
         .each([](Window& window) {
             window.handle->BeginDrawing();
             window.handle->ClearBackground(raylib::Color::White());
+            window.handle->DrawFPS(10, 10);
         });
 
     auto end = ecs.system<Window>("EndDrawing")
         .kind<RenderPhases::End>()
         .each([&](Window& window) {
             window.handle->EndDrawing();
+        });
+
+    auto post = ecs.system<Window>("PostFrame")
+        .kind<RenderPhases::Post>()
+        .each([&](Window& window) {
 #ifndef PLATFORM_WEB
             if (window.handle->ShouldClose()) {
-                window.handle->Close();
                 ecs.quit();
             }
 #endif

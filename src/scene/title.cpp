@@ -1,9 +1,11 @@
 #include "scene/title.h"
-#include "scene/types.h"
+
+#include "core/input.h"
 #include "core/resource.h"
+#include "core/window.h"
 #include "gfx/sprite.h"
 #include "gfx/transform.h"
-
+#include "scene/types.h"
 
 // TODO: Get the screen size from the main window component?
 constexpr int SCREEN_WIDTH = 960;
@@ -15,34 +17,43 @@ TitleSceneModule::TitleSceneModule(flecs::world& ecs) {
     ecs.module<TitleSceneModule>();
     ecs.import<game::SceneModule>();
 
-    flecs::entity title = ecs.pipeline()
-        .with(flecs::System)
-        .without<GameScene>()
-        .without<RestartScene>()
-        .build();
-
-    ecs.set<TitleScene>({ title });
+    struct Continue {};
 
     ecs.observer<game::ActiveScene>("ActivateTitleScene")
         .event(flecs::OnAdd)
         .second<TitleScene>()
         .each([&](game::ActiveScene) {
-            flecs::entity scene = ecs.component<game::SceneRoot>();
+            flecs::entity scene = ecs.entity<game::SceneRoot>();
 
             ecs.defer_begin();
             ecs.delete_with(flecs::ChildOf, scene);
             ecs.defer_end();
 
-            struct Logo {};
-            ecs.entity<Logo>()
+            ecs.entity<TitleScene>()
+                .add(flecs::Phase)
+                .depends_on(flecs::OnUpdate);
+
+            ecs.entity("Logo")
                 .is_a(gfx::Sprite)
-                .set<core::ResourcePath>({"raylib_logo.png"})
+                .set<core::ResourceResolver>({"raylib_logo.png"})
                 .set<gfx::Position>({{SCREEN_WIDTH/2, SCREEN_HEIGHT/2}})
                 .child_of(scene);
 
-            // TODO: Create all entities for the scene as children of the scene root
+            ecs.entity("ContinueButton")
+                .add<Continue>()
+                .add<core::Input>()
+                .child_of(scene);
+        });
 
-            ecs.set_pipeline(ecs.get<TitleScene>()->pipeline);
+    ecs.system<Continue>("TitleSceneContinue")
+        .kind<TitleScene>()
+        .each([&](Continue) {
+            auto input = ecs.get<core::Input>();
+            if (input->mouse.left.pressed) {
+                ecs.defer_begin();
+                ecs.add<game::ActiveScene, scene::GameScene>();
+                ecs.defer_end();
+            }
         });
 }
     

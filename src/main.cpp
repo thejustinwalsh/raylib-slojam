@@ -1,6 +1,8 @@
 #include <memory>
 #include <iostream>
 #include <flecs.h>
+
+#include "core/input.h"
 #include "core/resource.h"
 #include "core/window.h"
 #include "gfx/sprite.h"
@@ -8,6 +10,8 @@
 #include "game/scene.h"
 #include "scene/types.h"
 #include "scene/title.h"
+#include "scene/game.h"
+#include "scene/restart.h"
 
 #if defined(PLATFORM_WEB)
     #include <emscripten/emscripten.h>
@@ -22,7 +26,8 @@ int main()
 
     ecs_os_init();
 
-#if !defined(PLATFORM_WEB) && !defined(NDEBUG)
+#if !defined(PLATFORM_WEB) && defined(DEBUG)
+    ecs.import<flecs::monitor>();
     ecs.set<flecs::Rest>({});
 #endif
 
@@ -56,14 +61,18 @@ int main()
 
     ecs.import<core::ResourceModule>();
     ecs.import<core::WindowModule>();
+    ecs.import<core::InputModule>();
     ecs.import<gfx::SpriteModule>();
+    ecs.import<game::SceneModule>();
     ecs.import<scene::TitleSceneModule>();
+    ecs.import<scene::GameSceneModule>();
+    ecs.import<scene::RestartSceneModule>();
 
     struct MainWindow{};
     ecs.singleton<MainWindow>()
         .set<core::WindowSize>({{SCREEN_WIDTH, SCREEN_HEIGHT}})
         .set<core::WindowTitle>({"Raylib Slo-Jam 2023"})
-        .set<core::WindowFPS>({60})
+        .set<core::WindowFPS>({144})
         .add<core::Window>();
 
     // Init game title scene
@@ -71,6 +80,8 @@ int main()
     
     #if defined(PLATFORM_WEB)
         emscripten_set_main_loop_arg([](void* ctx) { ecs_progress((ecs_world_t*)ctx, 0); }, ecs, 0, true);
+    #else
+        ecs.set_target_fps(144);
     #endif
 
     while (ecs.progress()) { }

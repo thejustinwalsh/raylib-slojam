@@ -13,13 +13,14 @@ using namespace core;
 flecs::entity Sprite;
 
 SpriteModule::SpriteModule(flecs::world& ecs) {
+    ecs.module<SpriteModule>();
     ecs.import<core::ResourceModule>();
     ecs.import<core::WindowModule>();
     ecs.import<gfx::TextureModule>();
 
     Sprite = ecs.prefab("Sprite")
         .add<SpriteRendering>()
-        .add<ResourcePath>()
+        .add<ResourceResolver>()
         .add<Texture>()
         .set<Position>({{0, 0}})
         .set<Rotation>({0})
@@ -29,18 +30,19 @@ SpriteModule::SpriteModule(flecs::world& ecs) {
 
     ecs.system<SpriteRendering, Texture, Position, Rotation, Scale, Origin, Tint>("DrawSprite")
         .kind<core::RenderPhases::Draw>()
-        .each([](SpriteRendering, 
+        .each([&](SpriteRendering, 
             const Texture& texture, 
             const Position& pos, 
             const Rotation& rot, 
             const Scale& scale, 
             const Origin& origin,
             const Tint& tint) {
+                auto const& t = *texture.handle.get();
                 DrawTexturePro(
-                    texture.handle,
-                    raylib::Rectangle(0, 0, texture.handle.width, texture.handle.height),
-                    raylib::Rectangle(pos.value.x, pos.value.y, texture.handle.width * scale.value.x, texture.handle.height * scale.value.y),
-                    {origin.value.x * texture.handle.width, origin.value.y * texture.handle.height},
+                    t,
+                    raylib::Rectangle(0, 0, t.width, t.height),
+                    raylib::Rectangle(pos.value.x, pos.value.y, t.width * scale.value.x, t.height * scale.value.y),
+                    {origin.value.x * t.width, origin.value.y * t.height},
                     rot.value,
                     tint.value
                 );

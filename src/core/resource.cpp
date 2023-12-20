@@ -8,18 +8,22 @@ namespace core {
 ResourceModule::ResourceModule(flecs::world& ecs) {
     const std::filesystem::path appDir = GetApplicationDirectory();
 
-    ecs.observer<ResourcePath>("ResolveResourcePath")
+    ecs.observer<ResourceResolver>("ResolveResource")
         .event(flecs::OnSet)
-        .each([appDir](ResourcePath& path) {
+        .each([appDir](flecs::entity e, ResourceResolver const& path) {
             if (!path.value.empty()) {
-                path.value = (appDir / std::string("resources") / path.value);
+                std::string resource = (appDir / std::string("resources") / path.value);
+                if (std::filesystem::exists(resource)) {
+                    e.set<Resource>({ resource });
+                }
             }
         });
 
-    ecs.observer<ResourcePath>("ClearResourcePath")
+    ecs.observer<ResourceResolver>("ClearResourcePath")
         .event(flecs::OnRemove)
-        .each([](ResourcePath& path) {
-            path.value = "";
+        .each([appDir](flecs::entity e, ResourceResolver const& path) {
+            std::string resource = (appDir / std::string("resources") / path.value);
+            e.remove<Resource>();
         });
 
 

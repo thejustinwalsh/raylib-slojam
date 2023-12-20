@@ -24,11 +24,12 @@ struct WindowFPS {
 };
 
 namespace RenderPhases {
-    struct Begin{};
-    struct Background{};
-    struct Draw{};
-    struct UI{};
-    struct End{};
+    struct Begin {};
+    struct Background {};
+    struct Draw {};
+    struct UI {};
+    struct End {};
+    struct Post {};
 };
 
 /*

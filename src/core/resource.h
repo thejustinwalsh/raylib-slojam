@@ -5,7 +5,11 @@
 
 namespace core {
 
-struct ResourcePath {
+struct ResourceResolver {
+    std::string value;
+};
+
+struct Resource {
     std::string value;
 };
 

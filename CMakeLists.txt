@@ -32,7 +32,7 @@ file(GLOB_RECURSE RESOURCES CONFIGURE_DEPENDS resources/*)
 # Setup the executable target
 add_executable(${PROJECT_NAME} ${SOURCES} ${raygui_SOURCE_DIR/})
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
-target_compile_definitions(${PROJECT_NAME} PUBLIC -DRAYGUI_IMPLEMENTATION -DFLECS_NO_APP -DFLECS_NO_PLECS)
+target_compile_definitions(${PROJECT_NAME} PUBLIC -DRAYGUI_IMPLEMENTATION -DFLECS_NO_APP -DFLECS_NO_PLECS "$<$<CONFIG:DEBUG>:DEBUG>")
 
 # Include directories
 target_include_directories(${PROJECT_NAME} PUBLIC 

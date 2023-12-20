@@ -7,7 +7,7 @@
 namespace gfx {
 
 struct Texture {
-    raylib::Texture2D handle;
+    std::shared_ptr<raylib::Texture2D> handle;
 };
 
 /*
