@@ -12,9 +12,9 @@ std::unordered_map<std::string, std::weak_ptr<raylib::Texture>> textureCache;
 TextureModule::TextureModule(flecs::world& ecs) {
     ecs.import<core::ResourceModule>();
 
-    ecs.observer<Texture, Resource>("AddTexture")
+    ecs.observer<Texture, const Resource>("AddTexture")
         .event(flecs::OnSet)
-        .each([](Texture& texture, const Resource& res) {
+        .each([](Texture& texture, Resource const& res) {
             if (!res.value.empty() && IsWindowReady()) {
                 if (textureCache.find(res.value) != textureCache.end() && !textureCache[res.value].expired()) {
                     texture.handle = textureCache[res.value].lock();
