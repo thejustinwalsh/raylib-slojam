@@ -1,6 +1,8 @@
 #include "gfx/texture.h"
 
 #include <filesystem>
+#include <memory>
+#include <unordered_map>
 #include "core/resource.h"
 
 namespace gfx {
