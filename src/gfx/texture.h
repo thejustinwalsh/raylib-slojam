@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <memory>
 #include <flecs.h>
 #include <raylib-cpp.hpp>
 
