@@ -18,6 +18,7 @@ SpriteModule::SpriteModule(flecs::world& ecs) {
     ecs.import<core::WindowModule>();
     ecs.import<gfx::TextureModule>();
 
+    // Provide a sprite prefab with common defaults
     Sprite = ecs.prefab("Sprite")
         .add<SpriteRendering>()
         .add<ResourceResolver>()
@@ -28,6 +29,7 @@ SpriteModule::SpriteModule(flecs::world& ecs) {
         .set<Origin>({Origins::Center})
         .set<Tint>({{raylib::Color::White()}});
 
+    // Draw sprites 
     ecs.system<SpriteRendering, Texture, Position, Rotation, Scale, Origin, Tint>("DrawSprite")
         .kind<core::RenderPhases::Draw>()
         .each([&](SpriteRendering, 
@@ -42,7 +44,7 @@ SpriteModule::SpriteModule(flecs::world& ecs) {
                     t,
                     raylib::Rectangle(0, 0, t.width, t.height),
                     raylib::Rectangle(pos.value.x, pos.value.y, t.width * scale.value.x, t.height * scale.value.y),
-                    {origin.value.x * t.width, origin.value.y * t.height},
+                    {origin.value.x * t.width * scale.value.x, origin.value.y * t.height * scale.value.y},
                     rot.value,
                     tint.value
                 );
