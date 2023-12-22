@@ -2,15 +2,9 @@
 
 namespace scene {
 
-    struct TitleScene {
-        game::ScenePipeline pipeline;
-    };
+    struct TitleScene {};
 
-    struct GameScene {
-        game::ScenePipeline pipeline;
-    };
+    struct GameScene {};
 
-    struct RestartScene {
-        game::ScenePipeline pipeline;
-    };
+    struct RestartScene {};
 }

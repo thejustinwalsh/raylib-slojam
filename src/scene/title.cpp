@@ -17,6 +17,7 @@ TitleSceneModule::TitleSceneModule(flecs::world& ecs) {
     ecs.module<TitleSceneModule>();
     ecs.import<game::SceneModule>();
 
+    struct OnTitleSceneUpdate {};
     struct Continue {};
 
     ecs.observer<game::ActiveScene>("ActivateTitleScene")
@@ -29,7 +30,7 @@ TitleSceneModule::TitleSceneModule(flecs::world& ecs) {
             ecs.delete_with(flecs::ChildOf, scene);
             ecs.defer_end();
 
-            ecs.entity<TitleScene>()
+            ecs.entity<OnTitleSceneUpdate>()
                 .add(flecs::Phase)
                 .depends_on(flecs::OnUpdate);
 
@@ -46,7 +47,7 @@ TitleSceneModule::TitleSceneModule(flecs::world& ecs) {
         });
 
     ecs.system<Continue>("TitleSceneContinue")
-        .kind<TitleScene>()
+        .kind<OnTitleSceneUpdate>()
         .each([&](Continue) {
             auto input = ecs.get<core::Input>();
             if (input->mouse.left.pressed) {
