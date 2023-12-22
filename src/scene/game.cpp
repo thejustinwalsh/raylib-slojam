@@ -9,6 +9,8 @@
 
 namespace scene {
 
+flecs::timer spawner;
+
 GameSceneModule::GameSceneModule(flecs::world& ecs) {
     ecs.module<GameSceneModule>();
     ecs.import<game::SceneModule>();
@@ -17,12 +19,17 @@ GameSceneModule::GameSceneModule(flecs::world& ecs) {
     struct OnGameSceneValidate {};
     
     struct Player {};
-    struct Bullets {};
+    struct Bullet {};
+    struct Enemy {};
 
     struct FireDelay {
         float value = 0;
         float max = 0.1f;
     };
+
+    spawner = ecs.timer()
+        .interval(1)
+        .rate(60);
 
     ecs.observer<game::ActiveScene>("ActivateGameScene")
         .event(flecs::OnAdd)
@@ -50,7 +57,7 @@ GameSceneModule::GameSceneModule(flecs::world& ecs) {
                 .set<gfx::Direction>({{0, 0}})
                 .set<gfx::Speed>({200})
                 .set<gfx::Tint>({{raylib::Color::Red()}})
-                .set<FireDelay>({0, 0.05f})
+                .set<FireDelay>({0.05, 0.05})
                 .child_of(scene);
         });
     
@@ -76,9 +83,9 @@ GameSceneModule::GameSceneModule(flecs::world& ecs) {
                 delay.value += ecs.delta_time();
                 if (delay.value >= delay.max) {
                     delay.value = 0;
-                    flecs::entity bullet = ecs.entity()
+                    ecs.entity()
                         .is_a(gfx::Sprite)
-                        .add<Bullets>()
+                        .add<Bullet>()
                         .set<core::ResourceResolver>({"square.png"})
                         .set<gfx::Position>({pos.value})
                         .set<gfx::Direction>({dir.value})
@@ -88,19 +95,68 @@ GameSceneModule::GameSceneModule(flecs::world& ecs) {
                         .child_of(ecs.entity<game::SceneRoot>());
                 }
             }
-        });
 
-    // Destroy bullets when they leave the screen
-    ecs.system<Bullets, const gfx::Position>("DestroyOffScreenBullets")
-        .kind<OnGameSceneValidate>()
-        .each([&](flecs::entity e, Bullets, gfx::Position const& pos) {
-            if (pos.value.x < 0 || pos.value.x > GetScreenWidth() ||
-                pos.value.y < 0 || pos.value.y > GetScreenHeight()) {
-                ecs.defer_begin();
-                ecs.delete_with(e);
-                ecs.defer_end();
+            if (input->keys[KEY_SPACE].released) {
+                delay.value = delay.max;
             }
         });
+
+    ecs.system("SpawnEnemy")
+        .kind<OnGameSceneUpdate>()
+        .tick_source(spawner)
+        .iter([&](flecs::iter& it) {
+            const raylib::Vector2 pos = {
+                (float)GetRandomValue(0, GetScreenWidth()),
+                (float)GetRandomValue(0, GetScreenHeight())
+            };
+
+            const float angle = GetRandomValue(0, 360);
+            raylib::Vector2 dir = {
+                cos(angle * DEG2RAD),
+                sin(angle * DEG2RAD)
+            };
+
+            const float speed = GetRandomValue(50, 200);
+
+            const float size = GetRandomValue(2, 10);
+
+            ecs.entity()
+                .is_a(gfx::Sprite)
+                .add<Enemy>()
+                .set<core::ResourceResolver>({"square.png"})
+                .set<gfx::Position>({pos})
+                .set<gfx::Direction>({dir})
+                .set<gfx::Speed>({speed})
+                .set<gfx::Scale>({{size, size}})
+                .set<gfx::Tint>({{raylib::Color::Black()}})
+                .child_of(ecs.entity<game::SceneRoot>());
+
+            spawner.rate(GetRandomValue(60, 240));
+        });
+
+    // Destroy bullets and enemies when they leave the screen
+    auto destroyOffScreen = [&](flecs::iter& it) {
+        auto positions = it.field<const gfx::Position>(2);
+        for (auto i : it) {
+            flecs::entity e = it.entity(i);
+            const gfx::Position& pos = positions[i];
+            
+            if (pos.value.x < 0 || pos.value.x > GetScreenWidth() ||
+                pos.value.y < 0 || pos.value.y > GetScreenHeight()) {
+                it.world().defer_begin();
+                ecs_delete(it.world(), e);
+                it.world().defer_end();
+            }
+        }
+    };
+
+    ecs.system<Bullet, const gfx::Position>("DestroyOffScreenBullets")
+        .kind<OnGameSceneValidate>()
+        .iter(destroyOffScreen);
+
+    ecs.system<Enemy, const gfx::Position>("DestroyOffScreenEnemies")
+        .kind<OnGameSceneValidate>()
+        .iter(destroyOffScreen);
 
     // Ensure the player does not leave the screen
     ecs.system<Player, gfx::Position>("ClampPlayerPosition")

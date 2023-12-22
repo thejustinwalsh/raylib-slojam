@@ -39,7 +39,7 @@ SpriteModule::SpriteModule(flecs::world& ecs) {
             const Scale& scale, 
             const Origin& origin,
             const Tint& tint) {
-                auto const& t = *texture.handle.get();
+                auto const& t = *texture.handle;
                 DrawTexturePro(
                     t,
                     raylib::Rectangle(0, 0, t.width, t.height),
