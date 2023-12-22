@@ -15,8 +15,14 @@ GameSceneModule::GameSceneModule(flecs::world& ecs) {
 
     struct OnGameSceneUpdate {};
     struct OnGameSceneValidate {};
+    
     struct Player {};
     struct Bullets {};
+
+    struct FireDelay {
+        float value = 0;
+        float max = 0.1f;
+    };
 
     ecs.observer<game::ActiveScene>("ActivateGameScene")
         .event(flecs::OnAdd)
@@ -44,13 +50,14 @@ GameSceneModule::GameSceneModule(flecs::world& ecs) {
                 .set<gfx::Direction>({{0, 0}})
                 .set<gfx::Speed>({200})
                 .set<gfx::Tint>({{raylib::Color::Red()}})
+                .set<FireDelay>({0, 0.05f})
                 .child_of(scene);
         });
     
     // Move the player and spawn bullets
-    ecs.system<Player, gfx::Direction, gfx::Speed, const gfx::Position>("UpdatePlayer")
+    ecs.system<Player, FireDelay, gfx::Direction, gfx::Speed, const gfx::Position>("UpdatePlayer")
         .kind<OnGameSceneUpdate>()
-        .each([&](Player, gfx::Direction& dir, gfx::Speed& speed, gfx::Position const& pos) {
+        .each([&](Player, FireDelay& delay, gfx::Direction& dir, gfx::Speed& speed, gfx::Position const& pos) {
             auto input = ecs.get<core::Input>();
 
             // Update direction
@@ -66,16 +73,20 @@ GameSceneModule::GameSceneModule(flecs::world& ecs) {
 
             // Fire a bullet
             if (input->keys[KEY_SPACE].current && dir.value.Length() > 0) {
-                ecs.entity()
-                    .is_a(gfx::Sprite)
-                    .add<Bullets>()
-                    .set<core::ResourceResolver>({"square.png"})
-                    .set<gfx::Position>({pos.value})
-                    .set<gfx::Direction>({dir.value})
-                    .set<gfx::Speed>({500})
-                    .set<gfx::Scale>({{0.5f, 0.5f}})
-                    .set<gfx::Tint>({{raylib::Color::Black()}})
-                    .child_of(ecs.entity<game::SceneRoot>());
+                delay.value += ecs.delta_time();
+                if (delay.value >= delay.max) {
+                    delay.value = 0;
+                    flecs::entity bullet = ecs.entity()
+                        .is_a(gfx::Sprite)
+                        .add<Bullets>()
+                        .set<core::ResourceResolver>({"square.png"})
+                        .set<gfx::Position>({pos.value})
+                        .set<gfx::Direction>({dir.value})
+                        .set<gfx::Speed>({500})
+                        .set<gfx::Scale>({{0.5f, 0.5f}})
+                        .set<gfx::Tint>({{raylib::Color::Black()}})
+                        .child_of(ecs.entity<game::SceneRoot>());
+                }
             }
         });
 
@@ -89,6 +100,14 @@ GameSceneModule::GameSceneModule(flecs::world& ecs) {
                 ecs.delete_with(e);
                 ecs.defer_end();
             }
+        });
+
+    // Ensure the player does not leave the screen
+    ecs.system<Player, gfx::Position>("ClampPlayerPosition")
+        .kind<OnGameSceneValidate>()
+        .each([&](Player, gfx::Position& pos) {
+            pos.value.x = std::clamp(pos.value.x, 0.0f, (float)GetScreenWidth());
+            pos.value.y = std::clamp(pos.value.y, 0.0f, (float)GetScreenHeight());
         });
 
 }
