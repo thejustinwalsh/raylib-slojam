@@ -64,12 +64,14 @@ WindowModule::WindowModule(flecs::world& ecs) {
         .each([](Window& window) {
             window.handle->BeginDrawing();
             window.handle->ClearBackground(raylib::Color::White());
-            window.handle->DrawFPS(10, 10);
         });
 
     auto end = ecs.system<Window>("EndDrawing")
         .kind<RenderPhases::End>()
         .each([&](Window& window) {
+#ifdef DEBUG
+            window.handle->DrawFPS(10, 10);
+#endif
             window.handle->EndDrawing();
         });
 

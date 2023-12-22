@@ -73,7 +73,7 @@ int main()
     ecs.singleton<MainWindow>()
         .set<core::WindowSize>({{SCREEN_WIDTH, SCREEN_HEIGHT}})
         .set<core::WindowTitle>({"Raylib Slo-Jam 2023"})
-        .set<core::WindowFPS>({144})
+        //.set<core::WindowFPS>({144})
         .add<core::Window>();
 
     // Init game title scene
