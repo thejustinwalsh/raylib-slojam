@@ -14,6 +14,8 @@ std::unordered_map<std::string, std::weak_ptr<raylib::Texture>> textureCache;
 TextureModule::TextureModule(flecs::world& ecs) {
     ecs.import<core::ResourceModule>();
 
+    // Load the texture if it has not been loaded yet.
+    // Hand out the shared_ptr to the existing texture if it has been loaded.
     ecs.observer<Texture, const Resource>("AddTexture")
         .event(flecs::OnSet)
         .each([](Texture& texture, Resource const& res) {
@@ -28,6 +30,8 @@ TextureModule::TextureModule(flecs::world& ecs) {
             }
         });
     
+    // Release the shared_ptr for this handle, and allow RAII to clean up the texture.
+    // We are not removing the key from the cache, it may be used again through the lifetime of the application.
     ecs.observer<Texture>("RemoveTexture")
         .event(flecs::OnRemove)
         .each([](Texture& texture) {

@@ -35,7 +35,7 @@ namespace RenderPhases {
 /*
  * WindowModule
  * Handles the application window lifecycle.
-*/
+ */
 struct WindowModule {
     WindowModule(flecs::world& ecs);
 };

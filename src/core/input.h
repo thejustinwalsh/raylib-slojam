@@ -25,6 +25,11 @@ struct Input {
     MouseState mouse;
 };
 
+/*
+ * InputModule
+ * Handles the application input.
+ * TODO: Refactor - This module is pretty redundant in it's current state.
+ */
 struct InputModule {
     InputModule(flecs::world& ecs);
 };

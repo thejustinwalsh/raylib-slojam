@@ -4,16 +4,16 @@
 
 namespace game {
 
- /// Represents the current scene
+/// Represents the current scene
 struct ActiveScene {};
 
 /// Parent for all entities unique to the scene
 struct SceneRoot {};
 
- /// Pipeline for all game scene
-using ScenePipeline = flecs::entity;
-
-/// Handles transitioning the game through scene
+/*
+ * SceneModule
+ * Handles transitioning the game through scenes
+ */
 struct SceneModule {
     SceneModule(flecs::world& ecs);
 };
