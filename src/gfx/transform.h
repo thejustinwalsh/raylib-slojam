@@ -41,6 +41,14 @@ namespace Origins {
     static raylib::Vector2 BottomRight = {1, 1};
 }
 
+struct Translator {
+    raylib::Vector2 value = {0, 0};
+};
+
+struct Rotator {
+    float value = 0;
+};
+
 struct TransformModule {
     TransformModule(flecs::world& ecs);
 };
