@@ -62,6 +62,7 @@ int main()
     ecs.import<core::ResourceModule>();
     ecs.import<core::WindowModule>();
     ecs.import<core::InputModule>();
+    ecs.import<gfx::TransformModule>();
     ecs.import<gfx::SpriteModule>();
     ecs.import<game::SceneModule>();
     ecs.import<scene::TitleSceneModule>();
