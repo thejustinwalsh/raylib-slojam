@@ -118,7 +118,7 @@ GameSceneModule::GameSceneModule(flecs::world& ecs) {
 
             const float speed = GetRandomValue(50, 200);
 
-            const float size = GetRandomValue(2, 10);
+            const float size = GetRandomValue(2, 6);
 
             ecs.entity()
                 .is_a(gfx::Sprite)
@@ -126,6 +126,8 @@ GameSceneModule::GameSceneModule(flecs::world& ecs) {
                 .set<core::ResourceResolver>({"square.png"})
                 .set<gfx::Position>({pos})
                 .set<gfx::Direction>({dir})
+                .set<gfx::Rotation>({0})
+                .set<gfx::Rotator>({(float)GetRandomValue(-90, 90)})
                 .set<gfx::Speed>({speed})
                 .set<gfx::Scale>({{size, size}})
                 .set<gfx::Tint>({{raylib::Color::Black()}})
@@ -150,21 +152,30 @@ GameSceneModule::GameSceneModule(flecs::world& ecs) {
         }
     };
 
-    ecs.system<Bullet, const gfx::Position>("DestroyOffScreenBullets")
-        .kind<OnGameSceneValidate>()
-        .iter(destroyOffScreen);
+    auto screenWrap = [&](flecs::iter& it) {
+        auto positions = it.field<gfx::Position>(2);
+        for (auto i : it) {
+            flecs::entity e = it.entity(i);
+            gfx::Position& pos = positions[i];
+            
+            if (pos.value.x < 0) pos.value.x += GetScreenWidth();
+            if (pos.value.y < 0) pos.value.y += GetScreenHeight();
+            pos.value.x = std::fmod(pos.value.x, GetScreenWidth());
+            pos.value.y = std::fmod(pos.value.y, GetScreenHeight());
+        }
+    };
 
-    ecs.system<Enemy, const gfx::Position>("DestroyOffScreenEnemies")
+    ecs.system<Bullet, gfx::Position>("ScreenWrapBullets")
         .kind<OnGameSceneValidate>()
-        .iter(destroyOffScreen);
+        .iter(screenWrap);
 
-    // Ensure the player does not leave the screen
-    ecs.system<Player, gfx::Position>("ClampPlayerPosition")
+    ecs.system<Enemy, gfx::Position>("ScreenWrapEnemies")
         .kind<OnGameSceneValidate>()
-        .each([&](Player, gfx::Position& pos) {
-            pos.value.x = std::clamp(pos.value.x, 0.0f, (float)GetScreenWidth());
-            pos.value.y = std::clamp(pos.value.y, 0.0f, (float)GetScreenHeight());
-        });
+        .iter(screenWrap);
+
+    ecs.system<Player, gfx::Position>("ScreenWrapPlayer")
+        .kind<OnGameSceneValidate>()
+        .iter(screenWrap);
 
 }
 
