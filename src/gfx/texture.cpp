@@ -29,14 +29,6 @@ TextureModule::TextureModule(flecs::world& ecs) {
                 textureCache.insert({res.value, texture.handle});
             }
         });
-    
-    // Release the shared_ptr for this handle, and allow RAII to clean up the texture.
-    // We are not removing the key from the cache, it may be used again through the lifetime of the application.
-    ecs.observer<Texture>("RemoveTexture")
-        .event(flecs::OnRemove)
-        .each([](Texture& texture) {
-            texture.handle.reset();
-        });
 }
 
 } // namespace gfx
