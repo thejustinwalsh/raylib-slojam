@@ -152,6 +152,7 @@ GameSceneModule::GameSceneModule(flecs::world& ecs) {
         }
     };
 
+    // Wrap entities around the screen
     auto screenWrap = [&](flecs::iter& it) {
         auto positions = it.field<gfx::Position>(2);
         for (auto i : it) {
@@ -176,7 +177,6 @@ GameSceneModule::GameSceneModule(flecs::world& ecs) {
     ecs.system<Player, gfx::Position>("ScreenWrapPlayer")
         .kind<OnGameSceneValidate>()
         .iter(screenWrap);
-
 }
 
 } // namespace scene

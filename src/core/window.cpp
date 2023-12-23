@@ -44,13 +44,13 @@ WindowModule::WindowModule(flecs::world& ecs) {
             window.handle->SetTitle(title.Title.c_str());
         });
 
-    ecs.observer<Window, WindowSize>("UpdateWindowSize")
+    ecs.observer<Window, const WindowSize>("UpdateWindowSize")
         .event(flecs::OnSet)
         .each([](Window& window, const WindowSize& size) {
             window.handle->SetSize(size.dimension.x, size.dimension.y);
         });
 
-    ecs.observer<Window, WindowFPS>("UpdateWindowTargetFPS")
+    ecs.observer<Window, const WindowFPS>("UpdateWindowTargetFPS")
         .event(flecs::OnSet)
         .each([&](Window& window, const WindowFPS& fps) {
 #ifndef PLATFORM_WEB

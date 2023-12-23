@@ -71,18 +71,16 @@ int main()
 
     struct MainWindow{};
     ecs.singleton<MainWindow>()
+        .add<core::Window>()
         .set<core::WindowSize>({{SCREEN_WIDTH, SCREEN_HEIGHT}})
         .set<core::WindowTitle>({"Raylib Slo-Jam 2023"})
-        //.set<core::WindowFPS>({144})
-        .add<core::Window>();
+        .set<core::WindowFPS>({60});
 
     // Init game title scene
     ecs.add<game::ActiveScene, scene::TitleScene>();
     
     #if defined(PLATFORM_WEB)
         emscripten_set_main_loop_arg([](void* ctx) { ecs_progress((ecs_world_t*)ctx, 0); }, ecs, 0, true);
-    #else
-        ecs.set_target_fps(144);
     #endif
 
     while (ecs.progress()) { }
