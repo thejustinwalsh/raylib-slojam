@@ -6,6 +6,8 @@
 namespace core {
 
 ResourceModule::ResourceModule(flecs::world& ecs) {
+    ecs.module<core::ResourceModule>();
+    
     const std::filesystem::path appDir = GetApplicationDirectory();
 
     ecs.observer<ResourceResolver>("ResolveResource")
@@ -25,9 +27,6 @@ ResourceModule::ResourceModule(flecs::world& ecs) {
             std::string resource = (appDir / std::string("resources") / path.value);
             e.remove<Resource>();
         });
-
-
-    ecs.module<core::ResourceModule>();
 }
 
 } // namespace core

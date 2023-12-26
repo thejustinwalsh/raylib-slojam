@@ -7,6 +7,7 @@
 namespace core {
 
 WindowModule::WindowModule(flecs::world& ecs) {
+    ecs.module<WindowModule>();
     
     std::vector Phases = {
         ecs.entity<RenderPhases::Begin>(),
