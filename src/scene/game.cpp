@@ -4,6 +4,7 @@
 #include "gfx/transform.h"
 #include "core/resource.h"
 #include "core/input.h"
+#include "collision/collider.h"
 
 #include <raylib-cpp.hpp>
 
@@ -14,6 +15,7 @@ flecs::timer spawner;
 GameSceneModule::GameSceneModule(flecs::world& ecs) {
     ecs.module<GameSceneModule>();
     ecs.import<game::SceneModule>();
+    ecs.import<collision::ColliderModule>();
 
     struct OnGameSceneUpdate {};
     struct OnGameSceneValidate {};
@@ -57,6 +59,8 @@ GameSceneModule::GameSceneModule(flecs::world& ecs) {
                 .set<gfx::Direction>({{0, 0}})
                 .set<gfx::Speed>({200})
                 .set<gfx::Tint>({{raylib::Color::Red()}})
+                .set<collision::SphereCollider>({10})
+                .add<collision::CollidesWith, Enemy>()
                 .set<FireDelay>({0.05, 0.05})
                 .child_of(scene);
         });
@@ -92,6 +96,8 @@ GameSceneModule::GameSceneModule(flecs::world& ecs) {
                         .set<gfx::Speed>({500})
                         .set<gfx::Scale>({{0.5f, 0.5f}})
                         .set<gfx::Tint>({{raylib::Color::Black()}})
+                        .set<collision::SphereCollider>({5})
+                        .add<collision::CollidesWith, Enemy>()
                         .child_of(ecs.entity<game::SceneRoot>());
                 }
             }
@@ -131,9 +137,32 @@ GameSceneModule::GameSceneModule(flecs::world& ecs) {
                 .set<gfx::Speed>({speed})
                 .set<gfx::Scale>({{size, size}})
                 .set<gfx::Tint>({{raylib::Color::Black()}})
+                .set<collision::SphereCollider>({8 * size})
+                .add<collision::CollidesWith, Player>()
+                .add<collision::CollidesWith, Bullet>()
                 .child_of(ecs.entity<game::SceneRoot>());
 
             spawner.rate(GetRandomValue(60, 240));
+        });
+
+    // Enemy vs Bullet collision
+    // TODO: Spatial hash (optimization)
+    auto bulletQuery = ecs.query_builder<Bullet, collision::CollidesWith, const collision::SphereCollider, const gfx::Position>("GatherBullets")
+        .term_at(2).second<Enemy>()
+        .build();
+
+    ecs.system<Enemy, collision::CollidesWith, const collision::SphereCollider, const gfx::Position>("EnemyCollision")
+        .kind<OnGameSceneValidate>()
+        .term_at(2).second<Bullet>()
+        .each([bulletQuery, &ecs](flecs::entity enemy, Enemy, collision::CollidesWith, collision::SphereCollider const& col, gfx::Position const& pos) {
+            bulletQuery.each([&](flecs::entity bullet, Bullet, collision::CollidesWith, collision::SphereCollider const& bulletCol, gfx::Position const& bulletPos) {
+                if (pos.value.DistanceSqr(bulletPos.value) < (col.radius + bulletCol.radius) * (col.radius + bulletCol.radius)) {
+                    // delete the bullet, trigger enemy hit
+                    ecs.defer_begin();
+                    ecs_delete(ecs, bullet);
+                    ecs.defer_end();
+                }
+            });
         });
 
     // Destroy bullets and enemies when they leave the screen
